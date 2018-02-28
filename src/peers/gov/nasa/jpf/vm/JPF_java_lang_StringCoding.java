@@ -6,13 +6,13 @@
  * The Java Pathfinder core (jpf-core) platform is licensed under the
  * Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0. 
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -35,15 +35,19 @@ public class JPF_java_lang_StringCoding extends NativePeer {
   public int decode___3BII___3C (MJIEnv env, int clsObjRef,
       int bref, int off, int len) {
 
-    
+
     int cref = env.newCharArray(len);
     for (int i=0,j=off; i<len; i++,j++) {
       env.setCharArrayElement(cref, i, (char)env.getByteArrayElement(bref,j));
+      Object attr =env.getElementAttr(bref, j);
+      if(attr!=null) {
+        env.setElementAttr(cref, i, attr);
+      }
     }
-    
+
     return cref;
   }
-  
+
   @MJI
   public int encode___3CII___3B (MJIEnv env, int clsObjRef,
       int cref, int off, int len) {
@@ -51,8 +55,12 @@ public class JPF_java_lang_StringCoding extends NativePeer {
     int bref = env.newByteArray(len);
     for (int i=0,j=off; i<len; i++,j++) {
       env.setByteArrayElement(bref, i, (byte)env.getCharArrayElement(cref,j));
+      Object attr =env.getElementAttr(cref, j);
+      if(attr!=null) {
+        env.setElementAttr(bref, i, attr);
+      }
     }
-
-    return bref; 
+    
+    return bref;
   }
 }

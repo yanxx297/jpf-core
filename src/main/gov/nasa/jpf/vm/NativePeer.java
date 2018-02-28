@@ -6,13 +6,13 @@
  * The Java Pathfinder core (jpf-core) platform is licensed under the
  * Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0. 
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package gov.nasa.jpf.vm;
@@ -100,17 +100,19 @@ public class NativePeer implements Cloneable {
       } else {
         pcn = pkg + '.' + cn;
       }
-     
+
       try {
         Class<?> peerCls = loader.loadClass(pcn);
-        
+
+        if (peerCls==null) continue;
+
         if ((peerCls.getModifiers() & Modifier.PUBLIC) == 0) {
           logger.warning("non-public peer class: ", pcn);
           continue; // pointless to use this one, it would just create IllegalAccessExceptions
         }
-        
+
         logger.info("loaded peer class: ", pcn);
-        
+
         return peerCls;
       } catch (ClassNotFoundException cnfx) {
         // try next one
@@ -137,7 +139,7 @@ public class NativePeer implements Cloneable {
 
       if (peerCls != null) {
         initializePeerClass( peerCls);
-                
+
         if (logger.isLoggable(Level.INFO)) {
           logger.info("load peer: ", peerCls.getName());
         }
@@ -173,7 +175,7 @@ public class NativePeer implements Cloneable {
         ctor = cls.getConstructor(argTypes);
         o = ctor.newInstance(args);
       } catch (NoSuchMethodException nmx) {
-         
+
         if ((argTypes.length > 1) || ((argTypes.length == 1) && (argTypes[0] != Config.class))) {
           // fallback 1: try a single Config param
           argTypes = Config.CONFIG_ARGTYPES;
@@ -195,7 +197,7 @@ public class NativePeer implements Cloneable {
             + config.getMethodSignature(ctor));
       } catch (InvocationTargetException ix) {
         Throwable tx = ix.getCause();
-        throw new JPFException("exception " + tx + " occured in " 
+        throw new JPFException("exception " + tx + " occured in "
             + config.getMethodSignature(ctor));
       } catch (InstantiationException ivt) {
         throw new JPFException("abstract class cannot be instantiated");
@@ -303,7 +305,7 @@ public class NativePeer implements Cloneable {
     // since we allow native peer class hierarchies, we have to look at all methods
     //Method[] m = peerClass.getDeclaredMethods();
     Method[] m = peerClass.getMethods();
-    
+
     methods = new HashMap<String, Method>(m.length);
 
     Map<String,MethodInfo> methodInfos = ci.getDeclaredMethods();
@@ -401,12 +403,12 @@ public class NativePeer implements Cloneable {
       }
     }
   }
-  
+
   protected boolean ignoreOrphan (Method m){
     MJI annotation = m.getAnnotation(MJI.class);
     return annotation.noOrphanWarning();
   }
-  
+
   private MethodInfo searchMethod (String mname, MethodInfo[] methods) {
     int idx = -1;
 
@@ -431,4 +433,3 @@ public class NativePeer implements Cloneable {
     }
   }
 }
-
