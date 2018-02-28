@@ -6,13 +6,13 @@
  * The Java Pathfinder core (jpf-core) platform is licensed under the
  * Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
- *        http://www.apache.org/licenses/LICENSE-2.0. 
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package gov.nasa.jpf.vm;
@@ -24,8 +24,9 @@ import gov.nasa.jpf.vm.bytecode.InstructionInterface;
 
 
 /**
- * common root of all JPF bytecode instruction classes 
- * 
+ * common root of all JPF bytecode instruction classes
+ *
+ * added equals and hashcode method: Yannic Noller <nolleryc@gmail.com> - YN
  */
 public abstract class Instruction implements Cloneable, InstructionInterface {
 
@@ -35,13 +36,13 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
 
   // property/mode specific attributes
   protected Object attr;
-  
+
   // this is for changing from InstructionInterface types to Instruction types
   @Override
   public Instruction asInstruction(){
     return this;
   }
-  
+
   // to allow a classname and methodname context for each instruction
   public void setContext(String className, String methodName, int lineNumber,
           int offset) {
@@ -65,7 +66,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   }
 
   /**
-   * is this instruction part of a monitorenter code pattern 
+   * is this instruction part of a monitorenter code pattern
    */
   public boolean isMonitorEnterPrologue(){
     return false;
@@ -159,7 +160,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
       return (nextPc != this) && (ti.getStackFrameExecuting(this, 1) == null);
     }
 
-    // <2do> how do we account for exceptions? 
+    // <2do> how do we account for exceptions?
   }
 
   /**
@@ -171,7 +172,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   public void cleanupTransients(){
     // nothing here
   }
-  
+
   public boolean isSchedulingRelevant(SystemState ss, KernelState ks, ThreadInfo ti) {
     return false;
   }
@@ -179,7 +180,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   /**
    * this is the real workhorse
    * returns next instruction to enter in this thread
-   * 
+   *
    * <2do> it's unfortunate we roll every side effect into this method, because
    * it diminishes the value of the 'executeInstruction' notification: all
    * insns that require some sort of late binding (InvokeVirtual, GetField, ..)
@@ -197,13 +198,13 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   }
 
   /**
-   * this can contain additional info that was gathered/cached during execution 
+   * this can contain additional info that was gathered/cached during execution
    */
   @Override
   public String toPostExecString(){
     return toString();
   }
-  
+
   @Override
   public String getMnemonic() {
     String s = getClass().getSimpleName();
@@ -230,7 +231,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
         }
       }
     }
-    
+
     return null;
   }
 
@@ -258,8 +259,8 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
       return "[synthetic] " + mi.getName();
     }
   }
-  
-  
+
+
   /**
    * this returns a "pathname:line" string
    */
@@ -355,7 +356,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
     return ti.getPC().getNext();
   }
 
-  
+
   //--- the generic attribute API
 
   @Override
@@ -378,14 +379,14 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   }
 
   /**
-   * this replaces all of them - use only if you know 
+   * this replaces all of them - use only if you know
    *  - there will be only one attribute at a time
    *  - you obtained the value you set by a previous getXAttr()
    *  - you constructed a multi value list with ObjectList.createList()
    */
   @Override
   public void setAttr (Object a){
-    attr = ObjectList.set(attr, a);    
+    attr = ObjectList.set(attr, a);
   }
 
   @Override
@@ -421,7 +422,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   public ObjectList.Iterator attrIterator(){
     return ObjectList.iterator(attr);
   }
-  
+
   @Override
   public <T> ObjectList.TypedIterator<T> attrIterator(Class<T> attrType){
     return ObjectList.typedIterator(attr, attrType);
@@ -430,7 +431,7 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
   // -- end attrs --
 
   /**
-   * this is overridden by any Instruction that use a cache for class or 
+   * this is overridden by any Instruction that use a cache for class or
    * method to provide a type safe cloning
    */
   public Instruction typeSafeClone(MethodInfo mi) {
@@ -446,5 +447,53 @@ public abstract class Instruction implements Cloneable, InstructionInterface {
     }
 
     return clone;
+  }
+
+  /* YN: added equals method */
+  @Override
+  public int hashCode() {
+      int result = getByteCode();
+      result = 31 * result + insnIndex;
+      result = 31 * result + position;
+      if (mi != null) {
+          ClassInfo ci = mi.getClassInfo();
+          if (ci != null) {
+            int line = mi.getLineNumber(this);
+            String fname = ci.getSourceFileName();
+            result = 31 * result + line;
+            result = 31 * result + fname.hashCode();
+          } else {
+              result = 31 * result + mi.getName().hashCode();
+          }
+      }
+      return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+      if (!(obj instanceof Instruction)) {
+          return false;
+      }
+      Instruction other = (Instruction) obj;
+      if (other.getByteCode() != this.getByteCode()) {
+          return false;
+      }
+      if (other.insnIndex != this.insnIndex) {
+          return false;
+      }
+      if (other.position != this.position) {
+          return false;
+      }
+      if (!other.getFileLocation().equals(this.getFileLocation())) {
+          return false;
+      }
+      if (!other.getFilePos().equals(this.getFilePos())) {
+          return false;
+      }
+      if (other.insnIndex != this.insnIndex) {
+          return false;
+      }
+      return true;
+
   }
 }
