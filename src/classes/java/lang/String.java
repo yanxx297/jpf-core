@@ -287,6 +287,10 @@ implements java.io.Serializable, Comparable<String>, CharSequence {
 	native public int lastIndexOf(int ch, int fromIndex);
 	native public int indexOf(String str);
 	native public int indexOf(String str, int fromIndex);
+	public int indexOf(char[] source, int sourceOffset, int sourceCount, String target, int fromIndex) {
+	    return indexOf(source, sourceOffset, sourceCount, target.value, 0, target.value.length, fromIndex);
+	}
+	native public int indexOf(char[] source, int sourceOffset, int sourceCount, char[] target, int targetOffset, int targetCount, int fromIndex);
 
 	public int lastIndexOf(String str) {
 		return lastIndexOf(str, value.length);

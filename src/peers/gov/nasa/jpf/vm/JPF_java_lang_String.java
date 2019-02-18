@@ -358,7 +358,56 @@ public class JPF_java_lang_String extends NativePeer {
 
     return thisStr.indexOf(indexStr, fromIndex);
   }
+  
+  @MJI
+  public int indexOf___3CIILjava_lang_String_2I__I (MJIEnv env, int objref, int source, int sourceOffset,
+          int sourceCount, int targetRef, int fromIndex) {
+      int valueRef = env.getReferenceField(targetRef, "value");
+      int targetCount = env.getStringObject(targetRef).length();
+      return indexOf___3CII_3CIII__I(env, objref, source, sourceOffset, sourceCount, valueRef, 0, targetCount, fromIndex);
+  }
+  
+  @MJI
+  public int indexOf___3CII_3CIII__I (MJIEnv env, int objref, int sourceRef, int sourceOffset,
+          int sourceCount, int targetRef, int targetOffset, int targetCount, int fromIndex) {
+      char[] source = env.getCharArrayObject(sourceRef);
+      char[] target = env.getCharArrayObject(targetRef);
+      
+      if (fromIndex >= sourceCount) {
+          return (targetCount == 0 ? sourceCount : -1);
+      }
+      if (fromIndex < 0) {
+          fromIndex = 0;
+      }
+      if (targetCount == 0) {
+          return fromIndex;
+      }
 
+      char first = target[targetOffset];
+      int max = sourceOffset + (sourceCount - targetCount);
+
+      for (int i = sourceOffset + fromIndex; i <= max; i++) {
+          /* Look for first character. */
+          if (source[i] != first) {
+              while (++i <= max && source[i] != first);
+          }
+
+          /* Found first character, now look at the rest of v2 */
+          if (i <= max) {
+              int j = i + 1;
+              int end = j + targetCount - 1;
+              for (int k = targetOffset + 1; j < end && source[j]
+                      == target[k]; j++, k++);
+
+              if (j == end) {
+                  /* Found whole string. */
+                  return i - sourceOffset;
+              }
+          }
+      }
+      return -1;
+  }
+  
   @MJI
   public int lastIndexOf__Ljava_lang_String_2I__I (MJIEnv env, int objref, int str, int fromIndex) {
     String thisStr = env.getStringObject(objref);
