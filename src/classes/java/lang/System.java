@@ -20,6 +20,7 @@ package java.lang;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.channels.Channel;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
@@ -53,6 +54,11 @@ public class System {
       if (key != null && val != null) {
         properties.put(kv[i], kv[i+1]);
       }
+    }
+    
+    // TODO YN: check later if needed
+    if (properties.get("java.awt.headless") == null) {
+        properties.put("java.awt.headless", "true");
     }
 
     // this is the Java 6 sun.misc.SharedSecrets backdoor mechanism which I
